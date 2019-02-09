@@ -4,7 +4,21 @@
     if(!$connected){
         die("error in database connection");
     }
-    $users = $connection->get_data(array("id", "username", "name", "job"));
+
+    //pagination
+    $current_index = isset($_GET['current']) ? (int)$_GET['current'] : 1;
+    $count = $connection->get_count();
+    if($current_index >= $count || $current_index < 1)
+        $current_index = 1;
+    // exit();
+    $next_value = ($current_index + __RECORDS_PER_PAGE__ ) < $count ?
+     ($current_index + __RECORDS_PER_PAGE__ ) : $current_index ;
+    $next = $_SERVER['PHP_SELF'] . "?current= ". $next_value;
+
+    $previews_value = ($current_index - __RECORDS_PER_PAGE__ ) >1 ? ($current_index - __RECORDS_PER_PAGE__ ) :1 ;
+    $previews = $_SERVER['PHP_SELF'] . "?current= ". $previews_value;
+
+    $users = $connection->get_data(array("id", "username", "name", "job"), $current_index);
 ?>
 
 <!DOCTYPE html>
@@ -56,6 +70,20 @@
                 ?>
         </table>
         <!-- <a href="<?php echo $_SERVER['PHP_SELF']?>?logout"> Logout </a> -->
+        
+        <!-- <td> <a href="<?php echo $previews ?>" > previews</a>
+        <td> <a href="<?php echo $next ?>"> next</a> -->
+
+        <nav aria-label="Page navigation example" class="d-flex justify-content-center">
+        <ul class="pagination">
+            <li class="page-item">
+            <a href="<?php echo $previews ?>" class="page-link" >Previous</a></li>
+
+            <li class="page-item" >
+            <a href="<?php echo $next ?>" class="page-link" >Next</a></li>
+        </ul>
+        </nav>
+
     </div>
 </body>
 </html> 

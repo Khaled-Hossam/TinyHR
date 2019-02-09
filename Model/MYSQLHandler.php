@@ -128,6 +128,14 @@ class MYSQLHandler implements DbHandler
         
         
     }
+
+    public function get_count(){
+        $stmt = "select count(*) from users";
+        $result = $this->db_handler->query($stmt);
+        $row = $result->fetch_row();
+        return $row[0];
+        
+    }
 }
 
 

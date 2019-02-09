@@ -116,7 +116,7 @@ if( isset($_POST['apply']) ){
             $password = $oldpassword;
         //if there is not errors add this record to DB
             $result = $register->update($id, $username, $password, $name, $job, $image_name, $cv_name);
-        // header('Location: index.php');             
+        header('Location: index.php');             
     }
 }
 
@@ -174,6 +174,7 @@ function upload($file){
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="assets/css/bootstrap.min.css" rel="stylesheet">
 <style>
 body {
  font-family: Georgia, serif;
@@ -256,6 +257,9 @@ a {
 </head>
 <body >
 
+    
+
+    <form action="<?php echo $_SERVER['PHP_SELF'] ?>?edit" method="post" class ="form_1" enctype="multipart/form-data">
     <?php
     if(!empty($errors)){
         echo "<ul class='alert alert-danger'>";
@@ -265,8 +269,6 @@ a {
         echo "</ul>";
     }
     ?>
-
-    <form action="<?php echo $_SERVER['PHP_SELF'] ?>?edit" method="post" class ="form_1" enctype="multipart/form-data">
   <div class="container">
     <h1 style=" color:#00008B ">Edit you Profile</h1>
     <hr>
@@ -301,7 +303,7 @@ a {
     <hr>
 
     <button type="submit" class="registerbtn" name="apply">Apply</button>
-    <button type="submit" class="registerbtn" name="ok">OK</button>
+    <a href="<?php echo $_SERVER['PHP_SELF'] ?>" > back </a>
   </div>
   
 

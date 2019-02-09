@@ -50,8 +50,8 @@ $connection->disconnect(); // Closing Connection with Server
 						<!-- Collect the nav links, forms, and other content for toggling -->
 						<div class="collapse navbar-collapse offset" id="navbarSupportedContent">
 							<ul class="nav navbar-nav menu_nav ml-auto">
-                                <li class="nav-item active"><a class="nav-link" href="<?php echo $_SERVER['PHP_SELF'] ?>?logout"> Logout </a></li> 
-                                <li class="nav-item active"><a class="nav-link"href="<?php echo $_SERVER['PHP_SELF'] ?>?edit"> edit </a></li> 
+                                <li class="nav-item active"><a class="nav-link text-dark" href="<?php echo $_SERVER['PHP_SELF'] ?>?logout"> Logout </a></li> 
+                                <li class="nav-item active"><a class="nav-link text-dark"href="<?php echo $_SERVER['PHP_SELF'] ?>?edit"> edit </a></li> 
 				
 							</ul>
 						</div> 
@@ -74,20 +74,14 @@ $connection->disconnect(); // Closing Connection with Server
 					<div class="row">
 						<div class="col-lg-5">
                                 
-						<?php echo "<td> <img height='500px'  src='images/$image' </img> </td>"; ?>
+						<?php echo "<td> <img height='300px'  src='uploads/$image' </img> </td>"; ?>
 						</div>
 						<div class="col-lg-7">
                                                     
 							<div class="personal_text">
                                                             <?php echo "<h3>$name</h3>"; ?>
 								<?php echo "<h4>$job</h4>"; ?>
-								<p>You will begin to realise why this exercise is called the Dickens Pattern (with reference to the ghost showing Scrooge some different futures)</p>
-								<ul class="list basic_info">
-									<li><a href="#"><i class="lnr lnr-calendar-full"></i> 31st December, 1992</a></li>
-									<li><a href="#"><i class="lnr lnr-phone-handset"></i> 44 (012) 6954 783</a></li>
-									<li><a href="#"><i class="lnr lnr-envelope"></i> businessplan@donald</a></li>
-									<li><a href="#"><i class="lnr lnr-home"></i> Santa monica bullevard</a></li>
-								</ul>
+								
 							
 							</div>
 						</div>
@@ -102,7 +96,7 @@ $connection->disconnect(); // Closing Connection with Server
         	<div class="container">
         		<div class="row welcome_inner">
         		<?php
-            echo "<iframe src='cvs/$cv' width=\"100%\" style=\"height:100%\"></iframe>";
+            echo "<iframe src='uploads/$cv' width=\"100%\" style=\"height:500px\"></iframe>";
             ?>	
         			
         		</div>
