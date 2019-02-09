@@ -20,10 +20,10 @@
         
         if(isset($_FILES['image'])){
             //send errors array as a paramter to add errors in it (pass by referenece)
-            validate_file("image", $errors);
+            validate_file("image", $errors, "image/jpeg");
         }
         if(isset($_FILES['cv'])){
-            validate_file("cv" ,$errors);
+            validate_file("cv" ,$errors, "application/pdf");
         }
 
 
@@ -39,11 +39,13 @@
             $errors[] = "this username is exit please chose another one";
         }
         Google_recaptcha($errors);
+
         if(empty($errors)){
             $image_name = upload("image");
             $cv_name    = upload("cv");
+            $hashed_password = password_hash($password, PASSWORD_BCRYPT);
             //if there is not errors add this record to DB
-            $result = $register->register($username, $password, $name, $job, $image_name, $cv_name);
+            $result = $register->register($username, $hashed_password, $name, $job, $image_name, $cv_name);
             echo $result;
             $_SESSION['user_id'] = $result;
             $_SESSION['is_admin'] = false;
@@ -54,13 +56,13 @@
     /** here pass the errors array by reference to be able to edit it, otherwise i must pass
      *  the array then return it again 
      */
-    function validate_file($file, &$errors){
+    function validate_file($file, &$errors, $allowed_type){
         $file_name = time().'_'. $_FILES[$file]['name'];
         $file_size = $_FILES[$file]['size'];
         $file_tmp   = $_FILES[$file]['tmp_name'];
         $file_type  = $_FILES[$file]['type'];
         $file_error = $_FILES[$file]['error'];
-        // print_r($file_name);
+        print_r($file_type);
 
         //$file_error = 4 means no file uploaded
         if($file_error == 4 )
@@ -77,6 +79,19 @@
         // foreach ($_FILES[$file] as $key => $value) {
         //     echo "<b>$key</b> : $value <br>" ;
         // }
+        if($file_error == 0){
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file_tmp);
+            if ($mime == $allowed_type) {
+                //Its a doc format do something
+            }
+            else{
+                $type = $allowed_type == 'application/pdf' ? "pdf" : "jpg";
+                $errors []= "only [ $type ] is allowed in $file";
+            }
+            finfo_close($finfo);
+        }
+        
     }
 
     function validate_empty($input_name, &$errors){

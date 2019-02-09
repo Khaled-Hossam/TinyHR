@@ -23,7 +23,7 @@
 
         $login_try = new Login();
         if($username && $password){
-            $data = $login_try->login_attempt($username, $password)[0];
+            $data = $login_try->login_attempt($username, $password);
             if($data){
                 // foreach($data as $key=>$value){
                 //         echo "<b>$key</b> : $value <br>";
@@ -97,7 +97,7 @@
                         <input class="form-check-input" type="checkbox">
                         <label class="form-check-label"> Remember me </label>                   
                     </div>
-                    <button type="submit" name="login" class="btn btn-primary">Submit</button>
+                    <button type="submit"  name="login" class="btn btn-primary form-control">Submit</button>
                 </form> 
                 <a href="<?php echo $_SERVER['PHP_SELF']?>?signup"> Not register ? go to register page</a>
             </div>

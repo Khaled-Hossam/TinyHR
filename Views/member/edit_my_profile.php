@@ -82,10 +82,10 @@ if( isset($_POST['apply']) ){
     
     if(isset($_FILES['image']) && is_uploaded_file($_FILES['image']['tmp_name']) ){
         //send errors array as a paramter to add errors in it (pass by referenece)
-        validate_file("image", $errors);
+        validate_file("image", $errors, "image/jpeg");
     }
-    if(isset($_FILES['cv']) && is_uploaded_file($_FILES['image']['tmp_name']) ){
-        validate_file("cv" ,$errors);
+    if(isset($_FILES['cv']) && is_uploaded_file($_FILES['cv']['tmp_name']) ){
+        validate_file("cv" ,$errors, "application/pdf");
     }
 
     if(isset($password)){
@@ -108,12 +108,14 @@ if( isset($_POST['apply']) ){
             $image_name = upload("image");
         else
             $image_name = $oldimage;
-        if(isset($_FILES['image']) && is_uploaded_file($_FILES['image']['tmp_name']) )
+        if(isset($_FILES['cv']) && is_uploaded_file($_FILES['cv']['tmp_name']) )
             $cv_name    = upload("cv");
         else
             $cv_name = $oldcv;
         if(empty(trim($_POST['password'])) )
             $password = $oldpassword;
+        else
+            $password = password_hash($password, PASSWORD_BCRYPT);
         //if there is not errors add this record to DB
             $result = $register->update($id, $username, $password, $name, $job, $image_name, $cv_name);
         header('Location: index.php');             
@@ -123,7 +125,7 @@ if( isset($_POST['apply']) ){
 /** here pass the errors array by reference to be able to edit it, otherwise i must pass
  *  the array then return it again 
  */
-function validate_file($file, &$errors){
+function validate_file($file, &$errors, $allowed_type){
     $file_name = time().'_'. $_FILES[$file]['name'];
     $file_size = $_FILES[$file]['size'];
     $file_tmp   = $_FILES[$file]['tmp_name'];
@@ -146,6 +148,18 @@ function validate_file($file, &$errors){
     // foreach ($_FILES[$file] as $key => $value) {
     //     echo "<b>$key</b> : $value <br>" ;
     // }
+    if($file_error == 0){
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file_tmp);
+        if ($mime == $allowed_type) {
+            //Its a doc format do something
+        }
+        else{
+            $type = $allowed_type == 'application/pdf' ? "pdf" : "jpg";
+            $errors []= "only [ $type ] is allowed in $file";
+        }
+        finfo_close($finfo);
+    }
 }
 
 function validate_empty($input_name, &$errors){
