@@ -38,7 +38,7 @@
         if(!$unique_username){
             $errors[] = "this username is exit please chose another one";
         }
-
+        Google_recaptcha($errors);
         if(empty($errors)){
             $image_name = upload("image");
             $cv_name    = upload("cv");
@@ -96,7 +96,33 @@
         return $file_name;
     }
 
+
+//-----------------------bonus -------------------------------------------------
+function Google_recaptcha(&$errors){
+  if(isset($_POST['g-recaptcha-response']) && !empty($_POST['g-recaptcha-response']))
+  {
+      echo "nope";
+        $secret = '6Ld-JZAUAAAAABrTF13f7iX4s6h972mQ09YH_gvG';
+        $verifyResponse = file_get_contents('https://www.google.com/recaptcha/api/siteverify?secret='.$secret.'&response='.$_POST['g-recaptcha-response']);
+        $responseData = json_decode($verifyResponse);
+        if($responseData->success)
+        {
+            $succMsg = 'Your contact request have submitted successfully.';
+        }
+        else
+        {
+            $errors[]="Robot verification failed, please try again.";
+        }
+   
+   }else{
+       
+    $errors[]= 'Please click on the reCAPTCHA box.';
+  }
+}
+//------------------------------------------------------------------------------
 ?>
+
+
 
 
 <!DOCTYPE html>
@@ -109,6 +135,7 @@
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" media="screen" href="assets/css/main.css" />
     <script src="main.js"></script>
+    <script src='https://www.google.com/recaptcha/api.js' async defer ></script>
 
 </head>
 
@@ -166,6 +193,7 @@
                         <input class="form-check-input" type="checkbox">
                         <label class="form-check-label"> Remember me </label>                   
                     </div>
+                    <div class="g-recaptcha" data-sitekey="6Ld-JZAUAAAAAIVi0aSme1uF5nOvwboDUbIbI7cg" ></div>
                     <button type="submit" name="register" class="btn btn-primary">Submit</button>
                 </form> 
                 <a href="<?php echo $_SERVER['PHP_SELF']?>"> Already register ? go to login page</a>
