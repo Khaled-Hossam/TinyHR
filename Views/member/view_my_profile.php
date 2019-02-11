@@ -1,17 +1,17 @@
 <?php
-$connection = new MYSQLHandler();
+$connection = new MYSQLHandler("users");
 $connected = $connection->connect();
 if (!$connected) {
     die("error in database connection");
 }
 $user_id = $_SESSION['user_id'];
-$user = $connection->get_record_by_id("id", $user_id)[0];
+$user = $connection->get_record_by_id("id", $user_id);
 
 $id = $user['id'];
 $username = $user['username'];
 $name = $user['name'];
 $job = $user['job'];
-$reg_date = $user['reg_date'];
+$last_visit = $user['last_visit'];
 $image = $user['image'];
 $cv = $user['cv'];
 

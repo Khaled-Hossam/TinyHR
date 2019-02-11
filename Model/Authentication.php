@@ -1,23 +1,24 @@
 <?php
 
-class Login
+class Authentication
 {
     private $connection;
 
     public function __construct(){
 
-        $this->connection = new MYSQLHandler();
-        // connect to database and enter table name
-        $this->connection->connect("users");
+        $this->connection = new MYSQLHandler("users");
+        // connect to database
+        $this->connection->connect();
     }
 
     public function login_attempt($username, $password){
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        $sql_stmt = "select * from users where username= '$username' limit 1";
-        $result = $this->connection->get_result($sql_stmt);
+        $result = $this->connection->get_record_by_id("username", $username, "s");
         if($result){
-            $user = $result[0];
+            $user = $result;
             if (password_verify($password, $user['password'])) {
+                $stmt = "update users set status = 1 where id = ".$user['id'];
+                $this->connection->update($stmt);
                 return $user;
             } else {
                 //this means the password is wrong

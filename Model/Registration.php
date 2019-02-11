@@ -1,17 +1,18 @@
 <?php
 
-class Register
+class Registration
 {
     private $connection;
 
     public function __construct(){
 
-        $this->connection = new MYSQLHandler();
-        // connect to database and enter table name
-        $this->connection->connect("users");
+        $this->connection = new MYSQLHandler("users");
+        // connect to database
+        $this->connection->connect();
     }
 
     public function is_unique($field_name, $update= false, $id=0){
+        //this condtion to ignore check his username while editing
         if($update){
             $sql_stmt = "select username from users where username = '$field_name' and id!='$id'";            
         }
@@ -38,7 +39,6 @@ class Register
          where id = '$id' ";
          $this->connection->update($sql_stmt);
         //move that to db handler later
-        // return $this->connection->add_record($sql_stmt);
     }
 }
 

@@ -1,38 +1,19 @@
 <?php
- //----------------------------------- check for  waiting time --------------------------- 
-if (isset($_COOKIE["delay"]))
-{
-    if ( isset($_POST['login']) )
-    {
-        
-      $remainingtime=$_SESSION["futurentime"]-time();
-      echo "<script type='text/javascript'>alert(' you must wait for  $remainingtime seconds ');</script>";
-      die();
-    }
-}
-//-----------------------------------------------------------------------------------------
- if( isset($_POST['login']) ){
-          
-    if (!isset($_COOKIE["attemp"])){
-          $_SESSION["attemp"]=1;
-          setcookie("attemp", $_SESSION["attemp"]);
-         
-    }elseif ($_COOKIE["attemp"]<5)
-    {       
 
+    if( isset($_POST['login']) ){
+        // this array to store any error of login
         $errors = array();
 
         $username = $_POST['username'];
         $password = $_POST['password'];
 
-        Validator::validate_empty("username", $errors);
-        Validator::validate_empty("password", $errors);
+        validate_empty("username", $errors);
+        validate_empty("password", $errors);
 
-        $login_try = new Authentication();
+        $login_try = new Login();
         if($username && $password){
             $data = $login_try->login_attempt($username, $password);
             if($data){
-               
                 if( $data["is_admin"] == 1 ){
                     $_SESSION["user_id"] = true;
                     $_SESSION["is_admin"] = true;
@@ -44,33 +25,20 @@ if (isset($_COOKIE["delay"]))
                     require_once("Views/member/view_my_profile.php");
                     exit;
                 }
-
-                setcookie("attemp",0,time()-60*1);
             }
             else{
                 $errors[] = "Wrong username or password please try again";
-                if(isset($_SESSION["attemp"]))
-                    $_SESSION["attemp"]= $_SESSION["attemp"]+1;
-                else
-                    $_SESSION["attemp"] = 2;             
-                setcookie("attemp", $_SESSION["attemp"]);
             }
         }
-         }
-         elseif($_COOKIE["attemp"]>=5)
-         {
-          setcookie("attemp", 0,time()-60*1);
-          setcookie("delay",1,time()+60*1);
-          $_SESSION["futurentime"]=time()+60*1;
-           echo "<script type='text/javascript'>alert(' you failed many time please wait for 30 minutes   ');</script>";
-         }
+        
     }
 
-    // function validate_empty($input_name, &$errors){
-    //     $input = $_POST[$input_name];
-    //     if(!$input)
-    //         $errors[] = "$input_name is required";
-    // }
+    function validate_empty($input_name, &$errors){
+        $input = $_POST[$input_name];
+        if(!$input)
+            $errors[] = "$input_name is required";
+    }
+
 
     include_once('Views/components/head.php');
 

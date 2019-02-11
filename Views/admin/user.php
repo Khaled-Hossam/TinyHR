@@ -1,5 +1,5 @@
 <?php
-    $connection = new MYSQLHandler();
+    $connection = new MYSQLHandler("users");
     $connected = $connection->connect();
     if(!$connected){
         die("error in database connection");
@@ -10,16 +10,21 @@
         // admin info so i will restrict this 
         if($user_id == 1)
             header("Location: index.php");
-        $user = $connection->get_record_by_id("id", $user_id)[0];
+        $user = $connection->get_record_by_id("id", $user_id);
+        if(!$user)
+            header("Location: index.php");
     // }
 
     $id = $user['id'];
     $username = $user['username'];
     $name = $user['name'];
     $job = $user['job'];
-    $reg_date = $user['reg_date'];
+    $last_visit = $user['last_visit'];
     $image = $user['image'];
     $cv = $user['cv'];
+
+    include_once('Views/components/head.php');
+
 ?>
 
 
@@ -28,20 +33,6 @@
 
 
 
-<html lang="en">
-    <head>
-        <!-- Required meta tags -->
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="icon" href="img/favicon.png" type="image/png">
-        <title>profile</title>
-        <!-- Bootstrap CSS -->
-        <link rel="stylesheet" href="assets/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="assets/css/font-awesome.min.css">
-        
-        <!-- main css -->
-        <link rel="stylesheet" href="assets/css/style.css">
-    </head>
     <body>       
          <!--================Header Menu Area =================-->
         <header class="header_area">

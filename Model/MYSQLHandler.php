@@ -10,8 +10,8 @@ class MYSQLHandler implements DbHandler
     private $db_handler;
     private $table_name;
 
-    public function __construct(){
-
+    public function __construct($table_name){
+        $this->table_name = $table_name;
     }
 
     public function connect(){
@@ -21,7 +21,6 @@ class MYSQLHandler implements DbHandler
         {
             // echo "conntected successfuly<br>";
             $this->db_handler = $handler;
-            $this->table_name = "users";
             return true;
         }
         else{
@@ -83,27 +82,18 @@ class MYSQLHandler implements DbHandler
         mysqli_close($this->db_handler);
 
     }   
-    public function get_record_by_id($primary_key, $id){
-        $sql_stmt = "select * from $this->table_name where $primary_key = $id limit 1";
-        // $result_handler = mysqli_query($this->db_handler, $sql_stmt);
-        return $this->get_result($sql_stmt);
+    public function get_record_by_id($primary_key, $id, $paramter_type = 'i'){
+        $sql_stmt = $this->db_handler->prepare("select * from $this->table_name where $primary_key = ? limit 1");
+        
+        $sql_stmt->bind_param($paramter_type, $id);
+        $sql_stmt->execute();
+        $result = $sql_stmt->get_result();
+        if($result->num_rows === 0)
+            return false;
+        $row = $result->fetch_assoc();
+        $sql_stmt->close();
+        return $row;
 
-        // /* if the sql statment is right -but maybe there is no result- */
-        // if($result_handler){ 
-        //     if($result_handler->num_rows > 0){
-        //         return $res_arr = mysqli_fetch_assoc($result_handler);
-        //         // print_r($res_arr);
-               
-        //     }
-        //     else{
-        //         echo "there is no result";
-        //     }
-            
-        // }
-        // /* this check if the sql statemnt is wrong */
-        // else{ 
-        //     echo "error in the sql stament";
-        // }
     }
 
     
@@ -123,7 +113,7 @@ class MYSQLHandler implements DbHandler
     }
 
     public function update($stmt) {
-        var_dump($stmt);
+        // var_dump($stmt);
         $this->db_handler->query($stmt);
         
         
@@ -136,6 +126,47 @@ class MYSQLHandler implements DbHandler
         return $row[0];
         
     }
+
+
+
+    public function excel()
+        {
+            $this->connect();
+
+            $sql = "SELECT * FROM $this->table_name";
+            $query = $this->db_handler->query($sql);
+
+
+
+            $delimiter = ",";
+            $filename = "Users_data_" . date('Ymd') . ".csv"; // Create file name
+
+            //create a file pointer
+            $f = fopen('php://memory', 'w');
+
+            //set column headers
+            $fields = array('id', 'user_name', 'Fname', 'job');
+            fputcsv($f, $fields, $delimiter);
+
+            //output each row of the data, format line as csv and write to file pointer
+            while($row = MYSQLI_FETCH_ARRAY($query)){
+
+                $lineData = array($row['id'], $row['username'], $row['name'], $row['job']);
+                fputcsv($f, $lineData, $delimiter);
+            }
+
+            //move back to beginning of file
+            fseek($f, 0);
+
+            //set headers to download file rather than displayed
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '";');
+
+            //output all remaining data on a file pointer
+            fpassthru($f);
+
+
+        }
 }
 
 

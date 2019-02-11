@@ -1,54 +1,23 @@
 <?php
 
-$connection = new MYSQLHandler();
+$connection = new MYSQLHandler("users");
 $connected = $connection->connect();
 if (!$connected) {
     die("error in database connection");
 }
 
-// if(isset($_POST['apply']))
-// {
-//         $username =$_POST['username'];
-//         $name =$_POST['name'];
-//         $job =$_POST['job'];
-//         $image =$_POST['image'];
-//         $cv=$_POST['cv'];
-//         $password =$_POST['password'];
-// //--------------------------UPDATE DATA-----------------------------------------------------------  
-   
-//         $sql = "UPDATE users SET username='$username',password='$password',name='$name',job='$job',image='$image',cv='$cv' WHERE id='$user_id'"; 
-//         mysql_select_db('tictactoed');
-//         $retval = mysql_query( $sql, $connection );
-        
-//         $query_1 = mysql_query("select * from users where id='$user_id'", $connection);
-//             while ($row_1 = mysql_fetch_array($query_1)) {
-//             $username =$row_1['username'];
-//             }
-//             echo $username;
-
-        
-// //-------------------------------------------------------------------------------------------------            
-// }
-
 
 $user_id = $_SESSION['user_id'];
-$user = $connection->get_record_by_id("id", $user_id)[0];
+$user = $connection->get_record_by_id("id", $user_id);
 
 $id = $user['id'];
 $username = $user['username'];
 $oldpassword = $user['password'];
 $name = $user['name'];
 $job = $user['job'];
-$reg_date = $user['reg_date'];
+$last_visit = $user['last_visit'];
 $oldimage = $user['image'];
 $oldcv = $user['cv'];
-
-
-
-/* if(isset($_POST['ok']))
-    {
-     header("Location:profile.php");
-    }*/
 
 $connection->disconnect(); // Closing Connection with Server
 
@@ -58,7 +27,7 @@ $connection->disconnect(); // Closing Connection with Server
 
 
 if( isset($_POST['apply']) ){
-    // this array to store any error of registertion
+    // this array to store any error of edit
     $errors = array();
     $id = $_SESSION['user_id'];
     $username = $_POST['username'];
@@ -71,33 +40,33 @@ if( isset($_POST['apply']) ){
 
     // if(!$username)
     //     $errors[] = "username is required";
-    validate_empty("username", $errors);
+    Validator::validate_empty("username", $errors);
     if(isset($password)){
-        validate_empty("password", $errors);
-        validate_empty("re_password", $errors);
+        Validator::validate_empty("password", $errors);
+        Validator::validate_empty("re_password", $errors);
     }
     
-    validate_empty("name", $errors);
-    validate_empty("job", $errors);
+    Validator::validate_empty("name", $errors);
+    Validator::validate_empty("job", $errors);
     
-    if(isset($_FILES['image']) && is_uploaded_file($_FILES['image']['tmp_name']) ){
+    if(isset($_FILES['image']) && !empty($_FILES['image']['name']) ){
         //send errors array as a paramter to add errors in it (pass by referenece)
-        validate_file("image", $errors, "image/jpeg");
+        Validator::validate_file("image", $errors, "image/jpeg");
     }
-    if(isset($_FILES['cv']) && is_uploaded_file($_FILES['cv']['tmp_name']) ){
-        validate_file("cv" ,$errors, "application/pdf");
+    if(isset($_FILES['cv']) && !empty($_FILES['cv']['name']) ){
+        Validator::validate_file("cv" ,$errors, "application/pdf");
     }
 
     if(isset($password)){
         if($password !== $re_password)
         $errors[] = "the password doesn't match";
-        if( strlen($password) < 8 || strlen($password) > 16 )
+        if( strlen($password) < MIN_PASS_LEN || strlen($password) > MAX_PASS_LEN )
         $errors[] = "password should between 8 and 16 characters";
     }
     
 
-    $register = new Register();
-    $unique_username = $register->is_unique($username, true, $id);
+    $edit = new Registration();
+    $unique_username = $edit->is_unique($username, true, $id);
 
     if(!$unique_username){
         $errors[] = "this username is exit please chose another one";
@@ -105,11 +74,11 @@ if( isset($_POST['apply']) ){
 
     if(empty($errors)){
         if(isset($_FILES['image']) && is_uploaded_file($_FILES['image']['tmp_name']) )
-            $image_name = upload("image");
+            $image_name = Helper::upload("image");
         else
             $image_name = $oldimage;
         if(isset($_FILES['cv']) && is_uploaded_file($_FILES['cv']['tmp_name']) )
-            $cv_name    = upload("cv");
+            $cv_name    = Helper::upload("cv");
         else
             $cv_name = $oldcv;
         if(empty(trim($_POST['password'])) )
@@ -117,158 +86,36 @@ if( isset($_POST['apply']) ){
         else
             $password = password_hash($password, PASSWORD_BCRYPT);
         //if there is not errors add this record to DB
-            $result = $register->update($id, $username, $password, $name, $job, $image_name, $cv_name);
+            $result = $edit->update($id, $username, $password, $name, $job, $image_name, $cv_name);
         header('Location: index.php');             
     }
 }
 
-/** here pass the errors array by reference to be able to edit it, otherwise i must pass
- *  the array then return it again 
- */
-function validate_file($file, &$errors, $allowed_type){
-    $file_name = time().'_'. $_FILES[$file]['name'];
-    $file_size = $_FILES[$file]['size'];
-    $file_tmp   = $_FILES[$file]['tmp_name'];
-    $file_type  = $_FILES[$file]['type'];
-    $file_error = $_FILES[$file]['error'];
-    // print_r($file_name);
-
-    //$file_error = 4 means no file uploaded
-    if($file_error == 4 )
-        $errors[] = "$file not uploaded";
-
-    //$file_error = 1 means file bigger than the [upload_max_filesize] in php.ini
-    //$file_error = 2 means file bigger than the [MAX_FILE_SIZE] hidden attrubute in html form
-    //$file_size > 1m  => will prevent him if he passed 1 & 2 errors
-    else if($file_size > MAX_FILE_SIZE || $file_error == 1 || $file_error ==2)
-        $errors[] = "$file size is bigger than 1M ";
-
-  
-    // print_r($_FILES[$file]);
-    // foreach ($_FILES[$file] as $key => $value) {
-    //     echo "<b>$key</b> : $value <br>" ;
-    // }
-    if($file_error == 0){
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime = finfo_file($finfo, $file_tmp);
-        if ($mime == $allowed_type) {
-            //Its a doc format do something
-        }
-        else{
-            $type = $allowed_type == 'application/pdf' ? "pdf" : "jpg";
-            $errors []= "only [ $type ] is allowed in $file";
-        }
-        finfo_close($finfo);
-    }
-}
-
-function validate_empty($input_name, &$errors){
-    $input = $_POST[$input_name];
-    if(!$input)
-        $errors[] = "$input_name is required";
-}
-
-
-/** this function to uploads files in case there is no errors
- * and return the name of the file to store it in DB
- */
-function upload($file){
-    $file_name = time().'_'. $_FILES[$file]['name'];
-    $file_tmp_location  = $_FILES[$file]['tmp_name'];
-    move_uploaded_file($file_tmp_location, UPLOADS_DIR.$file_name);
-    return $file_name;
-}
 
 
 ?>
 
-
-
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="assets/css/bootstrap.min.css" rel="stylesheet">
-<style>
-body {
- font-family: Georgia, serif;
-   align-content:center; 
-   font-size: 20px;
-}
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Tiny HR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous"> -->
+    <link rel="stylesheet" type="text/css" media="screen" href="assets/css/main.css" />
+    <link rel="stylesheet" type="text/css" media="screen" href="assets/css/bootstrap.min.css" />
+    <!-- for view_my_profile & (user) page -->
+    <link rel="stylesheet" href="assets/css/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- for signup page -->
+    <script src='https://www.google.com/recaptcha/api.js' async defer ></script>
+    <!-- for edit_my_profile page -->
+    <link rel="stylesheet" href="assets/css/profile-edit.css" rel="stylesheet">
 
-label{
-    color:#00008B;
-   
-}
- .form_1 {
-      width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
 
-/* Add padding to containers */
-.container {
-  padding: 16px;
-  background-color: white;
-  margin-left:5px;
-      align:center;
-}
-
-/* Full-width input fields */
-input[type=text], input[type=password] {
-  width: 50%;
-  padding: 15px;
-  margin: 5px 0 22px 0;
-  display: inline-block;
-  border: none;
-  background: #f1f1f1;
- 
-  
-  
-}
-
-input[type=text]:focus, input[type=password]:focus {
-  background-color: #ddd;
-  outline: none;
-
- 
-}
-
-/* Overwrite default styles of hr */
-hr {
-  border: 1px solid #f1f1f1;
-  margin-bottom: 25px;
-}
-
-/* Set a style for the submit button */
-.registerbtn {
-  background-color: #00008B  ;
-  color: white;
-  padding: 16px 20px;
-  margin: 8px 0;
-  border: none;
-  cursor: pointer;
-  width: 20%;
-  opacity: 0.9;
-}
-
-.registerbtn:hover {
-  opacity: 1;
-}
-
-/* Add a blue text color to links */
-a {
-  color: dodgerblue;
-}
-
-/* Set a grey background color and center the text of the "sign in" section */
-.signin {
-  background-color: #00008B;
-  text-align: center;
-  
-}
-</style>
 </head>
+
 <body >
 
     

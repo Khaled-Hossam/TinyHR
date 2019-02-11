@@ -12,37 +12,38 @@
 
         // if(!$username)
         //     $errors[] = "username is required";
-        validate_empty("username", $errors);
-        validate_empty("password", $errors);
-        validate_empty("re_password", $errors);
-        validate_empty("name", $errors);
-        validate_empty("job", $errors);
+        Validator::validate_empty("username", $errors);
+        Validator::validate_empty("password", $errors);
+        Validator::validate_empty("re_password", $errors);
+        Validator::validate_empty("name", $errors);
+        Validator::validate_empty("job", $errors);
         
         if(isset($_FILES['image'])){
             //send errors array as a paramter to add errors in it (pass by referenece)
-            validate_file("image", $errors, "image/jpeg");
+            Validator::validate_file("image", $errors, "image/jpeg");
         }
         if(isset($_FILES['cv'])){
-            validate_file("cv" ,$errors, "application/pdf");
+            Validator::validate_file("cv" ,$errors, "application/pdf");
         }
 
 
         if($password !== $re_password)
             $errors[] = "the password doesn't match";
-        if( strlen($password) < 8 || strlen($password) > 16 )
+        if( strlen($password) < MIN_PASS_LEN || strlen($password) > MAX_PASS_LEN )
             $errors[] = "password should between 8 and 16 characters";
 
-        $register = new Register();
+        $register = new Registration();
         $unique_username = $register->is_unique($username);
 
         if(!$unique_username){
             $errors[] = "this username is exit please chose another one";
         }
+
         Google_recaptcha($errors);
 
         if(empty($errors)){
-            $image_name = upload("image");
-            $cv_name    = upload("cv");
+            $image_name = Helper::upload("image");
+            $cv_name    = Helper::upload("cv");
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
             //if there is not errors add this record to DB
             $result = $register->register($username, $hashed_password, $name, $job, $image_name, $cv_name);
@@ -53,63 +54,6 @@
         }
     }
 
-    /** here pass the errors array by reference to be able to edit it, otherwise i must pass
-     *  the array then return it again 
-     */
-    function validate_file($file, &$errors, $allowed_type){
-        $file_name = time().'_'. $_FILES[$file]['name'];
-        $file_size = $_FILES[$file]['size'];
-        $file_tmp   = $_FILES[$file]['tmp_name'];
-        $file_type  = $_FILES[$file]['type'];
-        $file_error = $_FILES[$file]['error'];
-        print_r($file_type);
-
-        //$file_error = 4 means no file uploaded
-        if($file_error == 4 )
-            $errors[] = "$file not uploaded";
-
-        //$file_error = 1 means file bigger than the [upload_max_filesize] in php.ini
-        //$file_error = 2 means file bigger than the [MAX_FILE_SIZE] hidden attrubute in html form
-        //$file_size > 1m  => will prevent him if he passed 1 & 2 errors
-        else if($file_size > MAX_FILE_SIZE || $file_error == 1 || $file_error ==2)
-            $errors[] = "$file size is bigger than 1M ";
-
-      
-        // print_r($_FILES[$file]);
-        // foreach ($_FILES[$file] as $key => $value) {
-        //     echo "<b>$key</b> : $value <br>" ;
-        // }
-        if($file_error == 0){
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $file_tmp);
-            if ($mime == $allowed_type) {
-                //Its a doc format do something
-            }
-            else{
-                $type = $allowed_type == 'application/pdf' ? "pdf" : "jpg";
-                $errors []= "only [ $type ] is allowed in $file";
-            }
-            finfo_close($finfo);
-        }
-        
-    }
-
-    function validate_empty($input_name, &$errors){
-        $input = $_POST[$input_name];
-        if(!$input)
-            $errors[] = "$input_name is required";
-    }
-
-    
-    /** this function to uploads files in case there is no errors
-     * and return the name of the file to store it in DB
-     */
-    function upload($file){
-        $file_name = time().'_'. $_FILES[$file]['name'];
-        $file_tmp_location  = $_FILES[$file]['tmp_name'];
-        move_uploaded_file($file_tmp_location, UPLOADS_DIR.$file_name);
-        return $file_name;
-    }
 
 
 //-----------------------bonus -------------------------------------------------
@@ -135,24 +79,12 @@ function Google_recaptcha(&$errors){
   }
 }
 //------------------------------------------------------------------------------
+
+
+include_once('Views/components/head.php');
 ?>
 
 
-
-
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Register Page</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" media="screen" href="assets/css/main.css" />
-    <script src="main.js"></script>
-    <script src='https://www.google.com/recaptcha/api.js' async defer ></script>
-
-</head>
 
 <body>
     <div class="containter">
@@ -195,21 +127,21 @@ function Google_recaptcha(&$errors){
 
                     <input name="MAX_FILE_SIZE" value="1048576" type="hidden"/>
                     <div class="form-group">
-                        <label for="image">Your Image</label>
+                        <label for="image">Your Image (only jpg allowed)</label>
                         <input type="file" name="image" class="form-control-file" id="image">
                     </div>
 
                     <div class="form-group">
-                        <label for="cv">Your Cv</label>
+                        <label for="cv">Your Cv (only pdf allowed)</label>
                         <input type="file" name="cv" class="form-control-file" id="cv">
                     </div>
 
-                    <div class="form-group form-check">         
+                    <!-- <div class="form-group form-check">         
                         <input class="form-check-input" type="checkbox">
                         <label class="form-check-label"> Remember me </label>                   
-                    </div>
+                    </div> -->
                     <div class="g-recaptcha" data-sitekey="6Ld-JZAUAAAAAIVi0aSme1uF5nOvwboDUbIbI7cg" ></div>
-                    <button type="submit" name="register" class="btn btn-primary">Submit</button>
+                    <button type="submit" name="register" class="btn btn-primary form-control">Submit</button>
                 </form> 
                 <a href="<?php echo $_SERVER['PHP_SELF']?>"> Already register ? go to login page</a>
             </div>
